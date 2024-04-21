@@ -1,18 +1,57 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 
 namespace Lab2QA
 {
+	public interface IFileReader
+	{
+		IEnumerable<string> ReadWords(string filename);
+	}
+
+	public class FileReader : IFileReader
+	{
+		public IEnumerable<string> ReadWords(string filename)
+		{
+			using (StreamReader file = new StreamReader(filename))
+			{
+				string word = "";
+				while (!file.EndOfStream)
+				{
+					char x = (char)file.Read();
+					if (char.IsLetter(x))
+					{
+						word += x;
+					}
+					else
+					{
+						if (word.Length > 0)
+						{
+							yield return word;
+						}
+						word = "";
+					}
+				}
+			}
+		}
+	}
+
 	public class SP
 	{
+		private readonly IFileReader fileReader;
+
+		public SP(IFileReader fileReader)
+		{
+			this.fileReader = fileReader;
+		}
+
 		public bool IsRight(string word)
 		{
 			if (word.Length > 30)
 			{
 				return false;
 			}
+
 			int vowels = 0;
 			foreach (char letter in word)
 			{
@@ -22,56 +61,26 @@ namespace Lab2QA
 					vowels++;
 				}
 			}
+
 			return word.Length - vowels < vowels;
 		}
+
 		public SortedSet<string> Result(string filename)
 		{
 			SortedSet<string> setResult = new SortedSet<string>();
-			StreamReader file = new StreamReader(filename);
-			string word = "";
-			while (!file.EndOfStream)
+			foreach (var word in fileReader.ReadWords(filename))
 			{
-				char x = (char)file.Read();
-				if (char.IsLetter(x))
+				if (IsRight(word))
 				{
-					word += x;
-				}
-				else
-				{
-					//Console.WriteLine(word);
-					if (word.Length > 0 && IsRight(word))
-					{
-						// wordsResult.Add(word);
-						setResult.Add(word);
-					}
-					word = "";
+					setResult.Add(word);
 				}
 			}
-			file.Close();
 			return setResult;
-
 		}
-		//public void ResultOut(SortedSet<string> setResult)
-		//{
-		//	Console.WriteLine("RESULT: " + setResult.Count + " words found >>>>>>>>>>>>>>>>>");
-
-		//	int i = 1;
-		//	foreach (string item in setResult)
-		//	{
-		//		Console.WriteLine(i + ". " + item);
-		//		i++;
-		//	}
-		//}
-
-	}
-	public class Runner
-	{
-		public static void Main()
+		public static void Main(string[] args)
 		{
-			//string filename = "C:\\Users\\anton\\source\\repos\\LabQA\\LabQA\\test.txt";
-			//SP prog = new SP();
-			//SortedSet<string> result = prog.Result(filename);
-			//prog.ResultOut(result);
+
 		}
 	}
+
 }

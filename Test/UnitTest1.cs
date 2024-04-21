@@ -1,55 +1,80 @@
 using Lab2QA;
+using Moq;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using Xunit;
 
-public class ProgramTests
+public class SPTests
 {
-	private SP sP;
-	private string Filepath = "C:\\Users\\anton\\source\\repos\\LabQA\\LabQA\\test.txt";
-    private SortedSet<string> NeededResult = new SortedSet<string> { "aaeabbb", "aahkiop", "arereeeeeeaaa", "eeeees", "hfksdaaaaaaa", "rionneuyu" };
-
-	public ProgramTests()
+	[Fact]
+	public void Result_WhenFileContainsValidWords_ReturnsExpectedResult()
 	{
-		sP = new SP();
+		// Arrange
+		var fileReaderMock = new Mock<IFileReader>();
+		fileReaderMock.Setup(x => x.ReadWords(It.IsAny<string>())).Returns(new List<string> { "aaaapp", "bananaaaa", "oooooorange" });
+
+		var sp = new SP(fileReaderMock.Object);
+
+		// Act
+		var result = sp.Result("dummyFilename");
+
+		// Assert
+		Assert.Equal(3, result.Count);
+		Assert.Contains("aaaapp", result);
+		Assert.Contains("bananaaaa", result);
+		Assert.Contains("oooooorange", result);
+		fileReaderMock.Verify(x => x.ReadWords(It.IsAny<string>()), Times.Once);
 	}
 
 	[Fact]
-	[Trait("Category", "Group1")]
-	public void TestIsRight()
+	public void Result_WhenFileReaderThrowsException()
 	{
-		//SP sP = new SP(); // Initialize sP before each test
-		Assert.True(sP.IsRight("hellooo"));
-		Assert.False(sP.IsRight("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+		// Arrange
+		var fileReaderMock = new Mock<IFileReader>();
+		fileReaderMock.Setup(x => x.ReadWords(It.IsAny<string>())).Throws<IOException>();
+
+		var sp = new SP(fileReaderMock.Object);
+
+		// Act
+		//var result = sp.Result("dummyFilename");
+
+		// Assert
+		Assert.Throws<IOException>(() => sp.Result("dummyFilename")); 
+		fileReaderMock.Verify(x => x.ReadWords(It.IsAny<string>()), Times.Once);
 	}
 
 	[Fact]
-	[Trait("Category", "Group1")]
-	public void TestException()
+	public void Result_WhenWordLengthExceeds30_ReturnsEmptyResult()
 	{
-		//SP sP = new SP(); // Initialize sP before each test
-						  // Test if an exception is thrown when passing a non-existing file path
-		Assert.Throws<FileNotFoundException>(() => sP.Result("non-existing-file.txt"));
-	}
+		// Arrange
+		var fileReaderMock = new Mock<IFileReader>();
+		fileReaderMock.Setup(x => x.ReadWords(It.IsAny<string>())).Returns(new List<string> { "supercalifragilisticexpialidocious" });
 
-	[Theory]
-	[InlineData("aaattt", false)]
-	[InlineData("eeett", true)]
-	[Trait("Category", "Group2")]
-	public void TestIsRightWithParam(string word, bool expected)
-	{
-		//SP sP = new SP(); // Initialize sP before each test
-		Assert.Equal(expected, sP.IsRight(word));
+		var sp = new SP(fileReaderMock.Object);
+
+		// Act
+		var result = sp.Result("dummyFilename");
+
+		// Assert
+		Assert.Empty(result);
+		fileReaderMock.Verify(x => x.ReadWords(It.IsAny<string>()), Times.Once);
 	}
 
 	[Fact]
-	[Trait("Category", "Group2")]
-	public void TestMatchers()
+	public void Result_WhenFileContainsInvalidWords_ReturnsExpectedResult()
 	{
-		//SP sP = new SP(); // Initialize sP before each test
-		SortedSet<string> result = sP.Result(this.Filepath);
-		Assert.Equal(this.NeededResult, result);
-		Assert.Equal(6, result.Count);
+		// Arrange
+		var fileReaderMock = new Mock<IFileReader>();
+		fileReaderMock.Setup(x => x.ReadWords(It.IsAny<string>())).Returns(new List<string> { "123", "word1", "invalid" });
+
+		var sp = new SP(fileReaderMock.Object);
+
+		// Act
+		var result = sp.Result("dummyFilename");
+
+		// Assert
+		Assert.Empty(result);
+		fileReaderMock.Verify(x => x.ReadWords(It.IsAny<string>()), Times.Once);
 	}
 }
